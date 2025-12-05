@@ -85,54 +85,81 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Junta os itens de texto para formar o conteúdo da página
             const pageText = textContent.items.map(item => item.str).join(' ');
-            fullText += pageText + '\n\n-- Página ' + i + ' --\n\n';
+            // Adicionamos o separador de página
+            fullText += pageText.trim() + '\n\n-- Página ' + i + ' --\n\n';
         }
-        return fullText;
+        return fullText.trim(); // Retorna o texto de todas as páginas
     }
 
     /**
      * Realiza OCR em um PDF (que é tratado como imagem).
      */
+    // ... (dentro de script.js)
+
+    /**
+     * Realiza OCR em um PDF, processando todas as páginas.
+     */
     async function performOCR(arrayBuffer) {
         updateMessage('... Etapa de OCR: Renderizando PDF para Canvas...', false);
         
-        // 1. Renderizar a primeira página do PDF no Canvas
         const pdfData = new Uint8Array(arrayBuffer);
         const loadingTask = pdfjsLib.getDocument({ data: pdfData });
         const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1); // Focamos apenas na primeira página para simplificar
 
-        const viewport = page.getViewport({ scale: 1.5 }); // Aumentar a escala melhora o OCR
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        canvasContainer.style.display = 'block';
+        let fullOCRText = '';
 
-        const renderContext = {
-            canvasContext: canvas.getContext('2d'),
-            viewport: viewport
-        };
-        await page.render(renderContext).promise;
+        // O loop agora processa TODAS as páginas
+        for (let i = 1; i <= pdf.numPages; i++) {
+            updateMessage(`... Etapa de OCR: Processando Página ${i} de ${pdf.numPages}...`, false);
+            const page = await pdf.getPage(i);
 
-        // 2. Converter o Canvas em uma URL de Imagem (Data URL)
-        const imageURL = canvas.toDataURL('image/png');
-
-        // 3. Executar o Tesseract OCR na imagem
-        updateMessage('... Etapa de OCR: Executando Tesseract (Pode demorar)...', false);
-        const { data: { text } } = await Tesseract.recognize(
-            imageURL,
-            'por', // Você pode mudar a linguagem, ex: 'eng' para Inglês
-            { 
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        updateMessage(`... OCR: ${Math.round(m.progress * 100)}% concluído...`, false);
-                    }
-                } 
+            // 1. Renderizar a página atual do PDF no Canvas
+            const viewport = page.getViewport({ scale: 2.0 }); // Aumentamos a escala para 2.0 para melhor precisão do OCR
+            
+            // O Canvas precisa ter o tamanho da página atual
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Mostramos o canvas apenas para fins de depuração na primeira página
+            if (i === 1) { 
+                canvasContainer.style.display = 'block'; 
+            } else {
+                canvasContainer.style.display = 'none'; // Esconde páginas subsequentes para evitar poluição visual
             }
-        );
+            
+            const renderContext = {
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
 
-        return text;
+            // 2. Converter o Canvas em uma URL de Imagem (Data URL)
+            const imageURL = canvas.toDataURL('image/png');
+
+            // 3. Executar o Tesseract OCR na imagem
+            updateMessage(`... OCR na Página ${i}: Executando Tesseract (Pode demorar)...`, false);
+            
+            // A flag 'Tesseract' precisa estar disponível globalmente
+            const { data: { text } } = await Tesseract.recognize(
+                imageURL,
+                'por', // Configurado para Português
+                { 
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            updateMessage(`... OCR na Pág ${i}: ${Math.round(m.progress * 100)}% concluído...`, false);
+                        }
+                    } 
+                }
+            );
+
+            // Adicionar o texto da página atual e o separador
+            fullOCRText += text.trim() + '\n\n-- Página ' + i + ' (OCR) --\n\n';
+        }
+
+        return fullOCRText.trim();
     }
 
 });
+
 
 
