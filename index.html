@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de PDF Avançado (Texto Direto + OCR)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* CSS simples para este exemplo */
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        #messages { margin-top: 10px; padding: 10px; border: 1px solid #ccc; background: #fff8e1; color: #333; }
+        #fileInput { display: block; margin-bottom: 20px; }
+        #canvasContainer { margin-top: 20px; border: 1px dashed #ddd; padding: 10px; text-align: center; }
+        #output { white-space: pre-wrap; word-wrap: break-word; background: #f4f4f4; padding: 15px; border-radius: 5px; margin-top: 10px; }
+        .loading { color: #007bff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📑 Leitor de PDF Avançado</h1>
+
+        <input type="file" id="fileInput" accept=".pdf" />
+        
+        <div id="messages">Aguardando a seleção do PDF...</div>
+
+        <h2>Conteúdo Extraído:</h2>
+        <pre id="output">O texto extraído aparecerá aqui.</pre>
+
+        <div id="canvasContainer" style="display: none;">
+            <h3>Visualização da Página (Para fins de depuração de OCR)</h3>
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

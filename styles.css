@@ -1,0 +1,70 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 700px;
+}
+
+h1 {
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Esconder o input nativo */
+#fileInput {
+    display: none;
+}
+
+/* Estilo para a label que funciona como botão */
+.custom-file-upload {
+    display: inline-block;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #28a745;
+    color: white;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    margin-bottom: 20px;
+}
+
+.custom-file-upload:hover {
+    background-color: #218838;
+}
+
+.content-display {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    background-color: #fafafa;
+}
+
+.content-display h2 {
+    margin-top: 0;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    font-size: 1.2em;
+}
+
+#fileContent {
+    /* Manter a formatação original do texto (quebras de linha, espaços) */
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #666;
+    max-height: 400px; /* Limitar a altura para evitar rolagem excessiva */
+    overflow-y: auto;
+}
