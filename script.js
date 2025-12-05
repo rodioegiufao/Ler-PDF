@@ -188,11 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const promptInstruction = 
             `Você é um assistente especializado em análise de documentos e pranchas. 
             O texto a seguir foi extraído de um PDF, por isso pode conter erros de OCR. 
-            Sua tarefa é ler o texto e fornecer uma análise em bullet points (pontos principais) em Português.
-
-            1.  **Assunto Principal:** Identifique o tópico central.
-            2.  **Tipo de Documento:** Especifique se é uma fatura, uma prancha de engenharia, um relatório, etc.
-            3.  **Principais Dados (Se Houver):** Extraia datas, nomes de empresas, números de projeto, ou valores importantes.
+            Sua tarefa é ler o texto e saber que tipo de documento é.
             
             TEXTO EXTRAÍDO: \n\n ${text}`;
 
@@ -246,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
