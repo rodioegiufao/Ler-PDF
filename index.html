@@ -32,15 +32,15 @@
         <h2>Conteúdo Extraído:</h2>
         <pre id="output">O texto extraído aparecerá aqui.</pre>
 
-        <div id="apiInstruction" style="margin-top: 20px; padding: 10px; border: 1px dashed #f00; background: #ffebeb;">
-            <strong>⚠️ Ação Necessária:</strong> Substitua "SUA_CHAVE_GEMINI_API_AQUI" no arquivo `script.js` pela sua chave do Google Gemini.
-        </div>
-
         <button id="analyzeButton" disabled>Analisar Conteúdo com Gemini</button>
 
         <div class="content-display" style="margin-top: 20px;">
             <h2>Análise da IA:</h2>
             <pre id="aiOutput">Aguardando texto para análise...</pre>
+        </div>
+        <div id="canvasContainer" style="display: none;">
+            <h3>Visualização da Página (Para fins de depuração de OCR)</h3>
+            <canvas id="pdfCanvas"></canvas>
         </div>
         
         <div id="canvasContainer" style="display: none;">
@@ -53,3 +53,4 @@
 </body>
 
 </html>
+
