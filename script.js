@@ -180,12 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 🎯 Onde você deve colocar a sua chave de API
         const apiKey = "AIzaSyC_D3EUasnUPSQxjqtT5Slekj5ew9gkVYE"; 
-        
-        if (apiKey === "Nada") {
-             aiOutput.textContent = 'Erro: A chave de API não foi substituída. Insira sua chave Gemini no script.js.';
-             analyzeButton.disabled = false;
-             return;
-        }
 
         // Endpoint para o modelo Gemini 2.5 Flash (ótimo para sumarização rápida)
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -252,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
