@@ -152,7 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             );
 
-            // Adicionar o texto da página atual e o separador
+            // 4. Limpeza de Recursos após cada página
+            // a. Limpar o Canvas (Importante para liberar memória do GPU/VRAM)
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            
+            // b. Encerra o Tesseract Worker após cada página para liberar a memória
+            // Tesseract.recognize cria e encerra um worker automaticamente, 
+            // mas forçar a liberação pode ajudar em alguns ambientes
+            // (A dependência de Tesseract.recognize deve gerenciar isso, mas vale o teste)
+            
+            // c. Adicionar o texto da página atual e o separador
             fullOCRText += text.trim() + '\n\n-- Página ' + i + ' (OCR) --\n\n';
         }
 
@@ -160,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
 
 
 
