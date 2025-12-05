@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 🎯 Onde você deve colocar a sua chave de API
         const apiKey = "AIzaSyC_D3EUasnUPSQxjqtT5Slekj5ew9gkVYE"; 
         
-        if (apiKey === "AIzaSyC_D3EUasnUPSQxjqtT5Slekj5ew9gkVYE") {
+        if (apiKey === "Nada") {
              aiOutput.textContent = 'Erro: A chave de API não foi substituída. Insira sua chave Gemini no script.js.';
              analyzeButton.disabled = false;
              return;
@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
