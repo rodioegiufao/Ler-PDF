@@ -83,14 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
-                // Converte a planilha para uma matriz de arrays
+                // Converte a planilha para uma matriz de arrays (sem usar cabeçalhos de coluna para garantir)
                 const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
+                // CORREÇÃO APLICADA AQUI: 
+                // Os dados de orçamento geralmente começam na 5ª linha (índice 4),
+                // após cabeçalhos e metadados.
+                const DATA_START_ROW_INDEX = 4; 
+
                 // Processa os dados para extrair as colunas D (3), E (4) e F (5)
                 let extractedDataArray = ['Descrição | Unidade | Quantidade']; 
                 
-                // Iterar sobre as linhas
-                for (let i = 1; i < sheetData.length; i++) {
+                // Iterar sobre as linhas, começando pela linha de dados (índice 4)
+                for (let i = DATA_START_ROW_INDEX; i < sheetData.length; i++) {
                     const row = sheetData[i];
                     
                     // Colunas no array sheetData: A=0, B=1, C=2, D=3, E=4, F=5...
@@ -99,18 +104,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Usar row[5] diretamente para capturar 0 e valores vazios
                     const quantity = row[5] !== undefined && row[5] !== null ? row[5] : ''; 
                     
+                    // Apenas adiciona se houver conteúdo em uma das três colunas
                     if (description || unit || quantity) { 
                         extractedDataArray.push(`${description} | ${unit} | ${quantity}`);
                     }
                 }
 
-                extractedExcelData = extractedDataArray.join('\n');
-                excelOutput.textContent = extractedExcelData;
-                updateMessage(`... Leitura do XLSX concluída: ${extractedDataArray.length - 1} itens extraídos.`);
+                // Remove a linha de cabeçalho da contagem
+                const totalItems = extractedDataArray.length - 1; 
+
+                if (totalItems > 0) {
+                    extractedExcelData = extractedDataArray.join('\n');
+                    excelOutput.textContent = extractedExcelData;
+                    updateMessage(`... Leitura do XLSX concluída: ${totalItems} itens extraídos.`);
+                } else {
+                    extractedExcelData = '';
+                    excelOutput.textContent = 'Erro: Nenhuma linha de dados encontrada a partir da 5ª linha. Verifique a estrutura do seu arquivo.';
+                    updateMessage('... Erro de processamento: Nenhuma linha de dados encontrada.', true);
+                }
 
             } catch (error) {
                 extractedExcelData = '';
-                excelOutput.textContent = 'Erro ao ler o arquivo XLSX. Verifique se o arquivo está no formato correto.';
+                excelOutput.textContent = 'Erro ao ler o arquivo XLSX. Verifique se o arquivo está no formato correto e se a biblioteca SheetJS foi carregada.';
                 updateMessage(`... Erro ao processar XLSX: ${error.message}`, true);
                 console.error('Erro de XLSX:', error);
             }
@@ -162,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (finalExtractedText) {
                 extractedPdfText = finalExtractedText;
-                pdfOutput.textContent = extractedPdfText;
+                pdfOutput.textContent = finalExtractedText;
                 updateMessage('... Processamento do PDF concluído. Pronto para a análise de IA.');
             } else {
                 pdfOutput.textContent = 'Não foi possível extrair nenhum texto do PDF.';
@@ -201,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
      * Extrai texto via OCR usando Tesseract.js (para PDFs escaneados/imagens).
      */
     async function extractTextFromOCR(arrayBuffer, canvas, canvasContainer) {
-        // ... (código para OCR, focado na primeira página, mantido do seu original) ...
         const pdfData = new Uint8Array(arrayBuffer);
         const loadingTask = pdfjsLib.getDocument({ data: pdfData });
         const pdf = await loadingTask.promise;
