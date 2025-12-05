@@ -1,5 +1,7 @@
 // Acessando o módulo pdfjsLib (precisa do type="module" no script tag do HTML)
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
@@ -127,4 +129,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return text;
     }
+
 });
