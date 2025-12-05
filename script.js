@@ -168,33 +168,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return fullOCRText.trim();
     }
     
-    /**
-     * Envia o texto extraído para uma API de IA para processamento (Conceitual).
-     */
+    // ------------------- FUNÇÃO DE INTEGRAÇÃO COM IA -------------------
+
     /**
      * Envia o texto extraído para a API do Google Gemini para processamento.
+     * **A CHAVE DE API DEVE SER SUBSTITUÍDA PELO USUÁRIO.**
      */
     async function analyzeTextWithAI(text) {
         aiOutput.textContent = 'Enviando para o Google Gemini...';
         analyzeButton.disabled = true;
 
-        // ** SUBSTITUA PELA SUA CHAVE DE API REAL **
-        // Lembre-se do risco de segurança ao expor a chave no cliente!
-        const apiKey = "AIzaSyC_D3EUasnUPSQxjqtT5Slekj5ew9gkVYE"; 
+        // 🎯 Onde você deve colocar a sua chave de API
+        const apiKey = "SUA_CHAVE_GEMINI_API_AQUI"; 
         
-        // Endpoint oficial para o modelo Gemini
-        // Estamos usando o modelo 'gemini-2.5-flash' por ser rápido e eficiente para sumarização.
+        if (apiKey === "SUA_CHAVE_GEMINI_API_AQUI") {
+             aiOutput.textContent = 'Erro: A chave de API não foi substituída. Insira sua chave Gemini no script.js.';
+             analyzeButton.disabled = false;
+             return;
+        }
+
+        // Endpoint para o modelo Gemini 2.5 Flash (ótimo para sumarização rápida)
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-        // A instrução para a IA (prompt)
+        // Prompt de Instrução (Você pode refinar esta instrução!)
         const promptInstruction = 
             `Você é um assistente especializado em análise de documentos e pranchas. 
-            O texto a seguir foi extraído de um PDF, possivelmente via OCR, por isso pode conter erros. 
-            Sua tarefa é ler o texto e fornecer uma análise em bullet points (pontos principais).
+            O texto a seguir foi extraído de um PDF, por isso pode conter erros de OCR. 
+            Sua tarefa é ler o texto e fornecer uma análise em bullet points (pontos principais) em Português.
 
-            1.  **Assunto Principal:** Qual é o tópico central?
-            2.  **Tipo de Documento:** É uma fatura, uma prancha de engenharia, um relatório, etc.?
-            3.  **Principais Dados (Se Houver):** Extraia quaisquer datas, nomes, ou valores importantes.
+            1.  **Assunto Principal:** Identifique o tópico central.
+            2.  **Tipo de Documento:** Especifique se é uma fatura, uma prancha de engenharia, um relatório, etc.
+            3.  **Principais Dados (Se Houver):** Extraia datas, nomes de empresas, números de projeto, ou valores importantes.
             
             TEXTO EXTRAÍDO: \n\n ${text}`;
 
@@ -205,32 +209,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    // Estrutura de requisição do Gemini
                     contents: [
                         {
                             parts: [
                                 {
-                                    text: promptInstruction // Envia o prompt com o texto incorporado
+                                    text: promptInstruction
                                 }
                             ]
                         }
                     ],
-                    // Configurações de geração (opcional)
                     config: {
-                        temperature: 0.1, // Temperatura baixa para respostas factuais e estáveis
+                        temperature: 0.1, 
                         maxOutputTokens: 500
                     }
                 })
             });
 
             if (!response.ok) {
-                 // A API Key é frequentemente o problema aqui
-                throw new Error(`Erro HTTP: ${response.status}. Verifique se a sua API Key está correta e ativa.`);
+                // Captura erros de rede ou status HTTP (ex: 401, 403, 500)
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.error?.message || `Erro HTTP: ${response.status}. Verifique sua API Key, permissões e limites de uso.`;
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
             
-            // A resposta do Gemini fica em 'candidates[0].content.parts[0].text'
+            // Extrai o texto da resposta do Gemini
             const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (aiResponseText) {
@@ -248,4 +252,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
