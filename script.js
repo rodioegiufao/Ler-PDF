@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Prompt de Instrução (Você pode refinar esta instrução!)
         const promptInstruction = 
-            `DETERMINE QUAIS MATERIAS SÃO UTILIZADOS NA PRANCHA
+            `DETERMINE AS INFORMAÇÕES GERAIS DO ARQUIVO
             
             TEXTO EXTRAÍDO: \n\n ${text}`;
 
@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
