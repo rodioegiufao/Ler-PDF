@@ -186,49 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Prompt de Instrução (Você pode refinar esta instrução!)
         const promptInstruction = 
-            `Com base no TEXTO EXTRAIDO de 'Lista de materiais' fornecido, extraia a tabela completa de itens, quantidades e unidades para cada um dos ambientes listados. Mantenha os dados separados por ambiente, incluindo os títulos de seção como 'COMPOSIÇÃO PRÓPRIA', 'SINAPI', 'Acessórios p/ eletrodutos', 'Acessórios uso geral', 'Cabo Unipolar', 'Dispositivo de Proteção', 'Luminária e acessórios', etc., se eles aparecerem dentro da lista de um ambiente específico.
-
-            Formato de Saída Desejado:
-            
-            Para cada ambiente (por exemplo, Guarita -1, Sala do Inversor, Pav. Térreo, etc.):
-            
-            Título do Ambiente (em negrito)
-            
-            Subtítulo da Seção (ex: - COMPOSIÇÃO PRÓPRIA, - SINAPI)
-            
-            Item do Material | Quantidade | Unidade
-            
-            Item do Material | Quantidade | Unidade
-            
-            ... (e assim por diante para todas as subseções e materiais)
-            
-            Exemplo de Início de Saída Esperada:
-            
-            Lista de materiais - Guarita -1
-            
-            COMPOSIÇÃO PRÓPRIA METROS
-            
-            ELETRODUTO FLEXÍVEL CORRUGADO, 3/4", INSTALADO NO PISO | 9.81 | m
-            
-            COMPOSIÇÃO PRÓPRIA UNIDADES
-            
-            INTERRUPTOR SIMPLES (1 MÓDULO), 10A/250V, INCLUINDO SUPORTE E PLACA, COM CONDULETE TIPO E, 3/4” | 1 | un
-            
-            ...
-            
-            SINAPI METROS
-            
-            ELETRODUTO RIGIDO, EM ACO ZINCADO OU GALVANIZADO, TIPO PESADO, DN=1", APARENTE | 1.44 | m
-            
-            ... Lista de materiais - Guarita 2
-            
-            COMPOSIÇÃO PRÓPRIA METROS
-            
-            ELETRODUTO FLEXÍVEL CORRUGADO, 3/4", INSTALADO NO PISO | 11.14 | m
-            
-            ...
-            
-            Por favor, garanta que cada material listado no texto original seja incluído em seu ambiente correspondente
+            `DETERMINE QUAIS MATERIAS SÃO UTILIZADOS NA PRANCHA
             
             TEXTO EXTRAÍDO: \n\n ${text}`;
 
@@ -282,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
