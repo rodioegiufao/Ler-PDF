@@ -86,46 +86,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Converte a planilha para uma matriz de arrays (sem usar cabeçalhos de coluna para garantir)
                 const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                // CORREÇÃO APLICADA AQUI: 
-                // Os dados de orçamento geralmente começam na 5ª linha (índice 4),
-                // após cabeçalhos e metadados.
-                const DATA_START_ROW_INDEX = 4; 
+                // NOVO: Determinar o índice de início dos dados procurando pela linha do cabeçalho
+                let DATA_START_ROW_INDEX = -1;
+                const DESCRIPTION_COLUMN_INDEX = 3; // Coluna D no índice de array
+                const HEADER_COLUMN_D_TEXT = 'Descrição'; // Texto esperado na célula do cabeçalho
+                
+                // Procurar pela linha do cabeçalho 'Descrição'
+                for (let i = 0; i < sheetData.length; i++) {
+                    const row = sheetData[i];
+                    // Verificar se a célula na coluna D (índice 3) contém o texto 'Descrição'
+                    // Usamos String(row[...]) para garantir que funcione mesmo se a célula for null ou number
+                    if (row[DESCRIPTION_COLUMN_INDEX] && String(row[DESCRIPTION_COLUMN_INDEX]).trim() === HEADER_COLUMN_D_TEXT) {
+                        DATA_START_ROW_INDEX = i + 1;
+                        break; // Cabeçalho encontrado, podemos parar
+                    }
+                }
+                
+                // Fallback (o cenário que falhou antes, mas útil se o cabeçalho estiver mal formatado)
+                if (DATA_START_ROW_INDEX === -1) {
+                     // Com base no seu arquivo, o índice 4 é o mais provável para o início dos dados se o cabeçalho for pulado
+                     DATA_START_ROW_INDEX = 4; 
+                     updateMessage('... Aviso: Não foi possível detectar a linha do cabeçalho "Descrição" automaticamente. Iniciando leitura na 5ª linha.', false);
+                }
+
 
                 // Processa os dados para extrair as colunas D (3), E (4) e F (5)
                 let extractedDataArray = ['Descrição | Unidade | Quantidade']; 
                 
-                // Iterar sobre as linhas, começando pela linha de dados (índice 4)
+                // Iterar sobre as linhas, começando a partir do índice de dados detectado
                 for (let i = DATA_START_ROW_INDEX; i < sheetData.length; i++) {
                     const row = sheetData[i];
                     
-                    // Colunas no array sheetData: A=0, B=1, C=2, D=3, E=4, F=5...
-                    const description = row[3] || ''; 
-                    const unit = row[4] || '';
-                    // Usar row[5] diretamente para capturar 0 e valores vazios
-                    const quantity = row[5] !== undefined && row[5] !== null ? row[5] : ''; 
+                    // Colunas no array sheetData: D=3, E=4, F=5
+                    const description = String(row[3] || '').trim(); // Garante string e remove espaços
+                    const unit = String(row[4] || '').trim();
+                    // Usar String(row[5]...) para garantir que números (incluindo 0) ou strings sejam tratados
+                    const quantity = String(row[5] !== undefined && row[5] !== null ? row[5] : '').trim(); 
                     
-                    // Apenas adiciona se houver conteúdo em uma das três colunas
-                    if (description || unit || quantity) { 
+                    // Incluir linhas que tenham descrição (incluindo linhas de sumário)
+                    if (description) { 
                         extractedDataArray.push(`${description} | ${unit} | ${quantity}`);
                     }
                 }
 
-                // Remove a linha de cabeçalho da contagem
+                // Remove a linha de cabeçalho (que adicionamos para display) da contagem
                 const totalItems = extractedDataArray.length - 1; 
 
                 if (totalItems > 0) {
-                    extractedExcelData = extractedDataArray.join('\n');
-                    excelOutput.textContent = extractedExcelData;
-                    updateMessage(`... Leitura do XLSX concluída: ${totalItems} itens extraídos.`);
+                    // Limitar a saída no console para display (os dados da IA usarão tudo)
+                    const displayData = extractedDataArray.slice(0, 50).join('\n') + 
+                                        (totalItems > 50 ? `\n... Mais ${totalItems - 50} itens não mostrados ...` : '');
+                                        
+                    extractedExcelData = extractedDataArray.join('\n'); // Usa TUDO para a IA
+                    excelOutput.textContent = displayData;
+                    updateMessage(`... Leitura do XLSX concluída: ${totalItems} itens extraídos, começando na linha ${DATA_START_ROW_INDEX + 1}.`);
                 } else {
                     extractedExcelData = '';
-                    excelOutput.textContent = 'Erro: Nenhuma linha de dados encontrada a partir da 5ª linha. Verifique a estrutura do seu arquivo.';
-                    updateMessage('... Erro de processamento: Nenhuma linha de dados encontrada.', true);
+                    excelOutput.textContent = `Erro: Nenhuma linha de dados com descrição encontrada a partir da linha ${DATA_START_ROW_INDEX + 1}. Verifique se a coluna 'Descrição' está na coluna D.`;
+                    updateMessage(`... Erro de processamento: Nenhuma linha de dados encontrada a partir da linha ${DATA_START_ROW_INDEX + 1}.`, true);
                 }
 
             } catch (error) {
                 extractedExcelData = '';
-                excelOutput.textContent = 'Erro ao ler o arquivo XLSX. Verifique se o arquivo está no formato correto e se a biblioteca SheetJS foi carregada.';
+                excelOutput.textContent = 'Erro fatal ao ler o arquivo XLSX. Verifique se o arquivo está no formato .xlsx, se está na primeira aba e se as bibliotecas foram carregadas.';
                 updateMessage(`... Erro ao processar XLSX: ${error.message}`, true);
                 console.error('Erro de XLSX:', error);
             }
