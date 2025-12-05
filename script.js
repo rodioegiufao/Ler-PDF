@@ -1,8 +1,10 @@
-// Acessando o módulo pdfjsLib (precisa do type="module" no script tag do HTML)
+// Acessando o módulo pdfjsLib
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
-// No seu script.js, mude a URL do worker
+
+// **CORREÇÃO DEFINITIVA:** Apontamos para o worker.js na mesma versão.
+// (Usaremos o .mjs para garantir a compatibilidade com a importação modular)
 pdfjsLib.GlobalWorkerOptions.workerSrc = 
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs'; // <--- Mudamos a extensão para .mjs
 
 document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
@@ -132,4 +134,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
 
