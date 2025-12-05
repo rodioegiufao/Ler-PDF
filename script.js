@@ -1,19 +1,32 @@
 // Acessando o módulo pdfjsLib
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
 
-// **CORREÇÃO DEFINITIVA:** Apontamos para o worker.js na mesma versão.
-// (Usaremos o .mjs para garantir a compatibilidade com a importação modular)
+// **CORREÇÃO CRUCIAL:** Configuração do Worker para pdf.js (versão modular .mjs)
 pdfjsLib.GlobalWorkerOptions.workerSrc = 
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs'; // <--- Mudamos a extensão para .mjs
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Referências do DOM
     const fileInput = document.getElementById('fileInput');
     const messages = document.getElementById('messages');
     const output = document.getElementById('output');
     const canvas = document.getElementById('pdfCanvas');
     const canvasContainer = document.getElementById('canvasContainer');
+    const analyzeButton = document.getElementById('analyzeButton'); // Adicionado
+    const aiOutput = document.getElementById('aiOutput');           // Adicionado
 
+    // Ouvintes de Eventos
     fileInput.addEventListener('change', handleFileUpload);
+    
+    // Novo ouvinte para o botão de análise de IA
+    analyzeButton.addEventListener('click', () => {
+        const textToAnalyze = analyzeButton.dataset.text;
+        if (textToAnalyze) {
+            analyzeTextWithAI(textToAnalyze);
+        } else {
+            aiOutput.textContent = 'Nenhum texto extraído para analisar.';
+        }
+    });
 
     /**
      * Atualiza a área de mensagens e o log
@@ -31,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = event.target.files[0];
         output.textContent = '';
         canvasContainer.style.display = 'none';
+        aiOutput.textContent = 'Aguardando texto para análise...';
+        analyzeButton.disabled = true; // Desabilita o botão até ter texto
 
         if (!file || file.type !== 'application/pdf') {
             updateMessage('Por favor, selecione um arquivo PDF válido.', true);
@@ -38,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateMessage('Carregando PDF...', false);
+        let finalExtractedText = '';
 
         try {
             // 1. Carregar o arquivo como ArrayBuffer
@@ -48,16 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (extractedText && extractedText.trim().length > 0) {
                 updateMessage('✅ Extração Direta (Texto Interno do PDF) realizada com sucesso.', false);
-                output.textContent = extractedText;
+                finalExtractedText = extractedText;
             } else {
                 updateMessage('⚠️ Texto direto vazio ou não encontrado. Iniciando OCR (Reconhecimento de Imagem)...', false);
                 
-                // 3. Se a extração direta falhar, realizar o OCR
+                // 3. Se a extração direta falhar, realizar o OCR em todas as páginas
                 extractedText = await performOCR(arrayBuffer);
 
                 if (extractedText && extractedText.trim().length > 0) {
                     updateMessage('✅ OCR concluído com sucesso.', false);
-                    output.textContent = extractedText;
+                    finalExtractedText = extractedText;
                 } else {
                     updateMessage('❌ OCR não conseguiu extrair texto.', true);
                     output.textContent = 'Não foi possível extrair o texto de forma direta ou por OCR.';
@@ -67,37 +83,36 @@ document.addEventListener('DOMContentLoaded', () => {
             updateMessage(`❌ Erro fatal: ${error.message}`, true);
             console.error(error);
         }
+
+        // Exibir e preparar para a IA
+        if (finalExtractedText) {
+            output.textContent = finalExtractedText;
+            analyzeButton.disabled = false;
+            analyzeButton.dataset.text = finalExtractedText; 
+        }
     }
 
     /**
-     * Tenta extrair o texto do PDF usando a API interna do pdf.js.
+     * Tenta extrair o texto do PDF usando a API interna do pdf.js (todas as páginas).
      */
     async function extractTextFromPDF(arrayBuffer) {
         const pdfData = new Uint8Array(arrayBuffer);
         const loadingTask = pdfjsLib.getDocument({ data: pdfData });
         const pdf = await loadingTask.promise;
 
-        // Itera sobre todas as páginas
         let fullText = '';
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             
-            // Junta os itens de texto para formar o conteúdo da página
             const pageText = textContent.items.map(item => item.str).join(' ');
-            // Adicionamos o separador de página
-            fullText += pageText.trim() + '\n\n-- Página ' + i + ' --\n\n';
+            fullText += pageText.trim() + '\n\n-- Página ' + i + ' (Direta) --\n\n';
         }
-        return fullText.trim(); // Retorna o texto de todas as páginas
+        return fullText.trim();
     }
 
     /**
-     * Realiza OCR em um PDF (que é tratado como imagem).
-     */
-    // ... (dentro de script.js)
-
-    /**
-     * Realiza OCR em um PDF, processando todas as páginas.
+     * Realiza OCR em um PDF, processando todas as páginas com otimizações de memória.
      */
     async function performOCR(arrayBuffer) {
         updateMessage('... Etapa de OCR: Renderizando PDF para Canvas...', false);
@@ -108,24 +123,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let fullOCRText = '';
 
-        // O loop agora processa TODAS as páginas
         for (let i = 1; i <= pdf.numPages; i++) {
             updateMessage(`... Etapa de OCR: Processando Página ${i} de ${pdf.numPages}...`, false);
             const page = await pdf.getPage(i);
 
-            // 1. Renderizar a página atual do PDF no Canvas
-            const viewport = page.getViewport({ scale: 2.0 }); // Aumentamos a escala para 2.0 para melhor precisão do OCR
+            // Reduzir a escala para 1.5 ajuda a evitar estouro de memória em documentos longos
+            const viewport = page.getViewport({ scale: 1.5 }); 
             
-            // O Canvas precisa ter o tamanho da página atual
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             
-            // Mostramos o canvas apenas para fins de depuração na primeira página
-            if (i === 1) { 
-                canvasContainer.style.display = 'block'; 
-            } else {
-                canvasContainer.style.display = 'none'; // Esconde páginas subsequentes para evitar poluição visual
-            }
+            // Mostra o canvas na primeira página, esconde nas demais (para otimização e visual)
+            canvasContainer.style.display = (i === 1) ? 'block' : 'none';
             
             const renderContext = {
                 canvasContext: canvas.getContext('2d'),
@@ -133,43 +142,75 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             await page.render(renderContext).promise;
 
-            // 2. Converter o Canvas em uma URL de Imagem (Data URL)
             const imageURL = canvas.toDataURL('image/png');
 
-            // 3. Executar o Tesseract OCR na imagem
-            updateMessage(`... OCR na Página ${i}: Executando Tesseract (Pode demorar)...`, false);
+            updateMessage(`... OCR na Página ${i}: Executando Tesseract...`, false);
             
-            // A flag 'Tesseract' precisa estar disponível globalmente
             const { data: { text } } = await Tesseract.recognize(
                 imageURL,
-                'por', // Configurado para Português
+                'por',
                 { 
                     logger: m => {
                         if (m.status === 'recognizing text') {
+                            // Atualiza a mensagem de progresso do OCR
                             updateMessage(`... OCR na Pág ${i}: ${Math.round(m.progress * 100)}% concluído...`, false);
                         }
                     } 
                 }
             );
 
-            // 4. Limpeza de Recursos após cada página
-            // a. Limpar o Canvas (Importante para liberar memória do GPU/VRAM)
+            // 4. Limpeza de Recursos (Estratégia de otimização de memória)
             canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            
-            // b. Encerra o Tesseract Worker após cada página para liberar a memória
-            // Tesseract.recognize cria e encerra um worker automaticamente, 
-            // mas forçar a liberação pode ajudar em alguns ambientes
-            // (A dependência de Tesseract.recognize deve gerenciar isso, mas vale o teste)
-            
-            // c. Adicionar o texto da página atual e o separador
+
             fullOCRText += text.trim() + '\n\n-- Página ' + i + ' (OCR) --\n\n';
         }
 
         return fullOCRText.trim();
     }
+    
+    /**
+     * Envia o texto extraído para uma API de IA para processamento (Conceitual).
+     */
+    async function analyzeTextWithAI(text) {
+        aiOutput.textContent = 'Enviando para o modelo de IA...';
+        analyzeButton.disabled = true;
 
+        // ** SUBSTITUA PELOS SEUS VALORES REAIS **
+        const apiKey = "SUA_CHAVE_SECRETA_DA_API"; 
+        const endpoint = "https://api.ia.com/v1/analyze"; 
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}` 
+                },
+                body: JSON.stringify({
+                    // Prompt de exemplo para sumarização
+                    prompt: "O texto abaixo é um trecho de um documento ou prancha. Por favor, identifique o assunto principal e o tipo de documento em uma ou duas frases.",
+                    document_content: text,
+                    max_tokens: 150 
+                })
+            });
+
+            if (!response.ok) {
+                // Se der erro no servidor (ex: 401 Unauthorized, 500 Server Error)
+                throw new Error(`Erro HTTP: ${response.status} - Verifique a API Key e o Endpoint.`);
+            }
+
+            const data = await response.json();
+            
+            // Tenta pegar a resposta do campo 'summary' ou 'text'
+            const aiResponseText = data.summary || data.text || JSON.stringify(data, null, 2);
+
+            aiOutput.textContent = aiResponseText;
+
+        } catch (error) {
+            aiOutput.textContent = `Erro na análise de IA: ${error.message}`;
+            console.error('Erro de API da IA:', error);
+        } finally {
+            analyzeButton.disabled = false;
+        }
+    }
 });
-
-
-
-
