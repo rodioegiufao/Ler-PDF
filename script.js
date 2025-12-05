@@ -171,40 +171,74 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Envia o texto extraído para uma API de IA para processamento (Conceitual).
      */
+    /**
+     * Envia o texto extraído para a API do Google Gemini para processamento.
+     */
     async function analyzeTextWithAI(text) {
-        aiOutput.textContent = 'Enviando para o modelo de IA...';
+        aiOutput.textContent = 'Enviando para o Google Gemini...';
         analyzeButton.disabled = true;
 
-        // ** SUBSTITUA PELOS SEUS VALORES REAIS **
-        const apiKey = "SUA_CHAVE_SECRETA_DA_API"; 
-        const endpoint = "https://api.ia.com/v1/analyze"; 
+        // ** SUBSTITUA PELA SUA CHAVE DE API REAL **
+        // Lembre-se do risco de segurança ao expor a chave no cliente!
+        const apiKey = "AIzaSyC_D3EUasnUPSQxjqtT5Slekj5ew9gkVYE"; 
+        
+        // Endpoint oficial para o modelo Gemini
+        // Estamos usando o modelo 'gemini-2.5-flash' por ser rápido e eficiente para sumarização.
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+        // A instrução para a IA (prompt)
+        const promptInstruction = 
+            `Você é um assistente especializado em análise de documentos e pranchas. 
+            O texto a seguir foi extraído de um PDF, possivelmente via OCR, por isso pode conter erros. 
+            Sua tarefa é ler o texto e fornecer uma análise em bullet points (pontos principais).
+
+            1.  **Assunto Principal:** Qual é o tópico central?
+            2.  **Tipo de Documento:** É uma fatura, uma prancha de engenharia, um relatório, etc.?
+            3.  **Principais Dados (Se Houver):** Extraia quaisquer datas, nomes, ou valores importantes.
+            
+            TEXTO EXTRAÍDO: \n\n ${text}`;
 
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}` 
                 },
                 body: JSON.stringify({
-                    // Prompt de exemplo para sumarização
-                    prompt: "O texto abaixo é um trecho de um documento ou prancha. Por favor, identifique o assunto principal e o tipo de documento em uma ou duas frases.",
-                    document_content: text,
-                    max_tokens: 150 
+                    // Estrutura de requisição do Gemini
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: promptInstruction // Envia o prompt com o texto incorporado
+                                }
+                            ]
+                        }
+                    ],
+                    // Configurações de geração (opcional)
+                    config: {
+                        temperature: 0.1, // Temperatura baixa para respostas factuais e estáveis
+                        maxOutputTokens: 500
+                    }
                 })
             });
 
             if (!response.ok) {
-                // Se der erro no servidor (ex: 401 Unauthorized, 500 Server Error)
-                throw new Error(`Erro HTTP: ${response.status} - Verifique a API Key e o Endpoint.`);
+                 // A API Key é frequentemente o problema aqui
+                throw new Error(`Erro HTTP: ${response.status}. Verifique se a sua API Key está correta e ativa.`);
             }
 
             const data = await response.json();
             
-            // Tenta pegar a resposta do campo 'summary' ou 'text'
-            const aiResponseText = data.summary || data.text || JSON.stringify(data, null, 2);
+            // A resposta do Gemini fica em 'candidates[0].content.parts[0].text'
+            const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            aiOutput.textContent = aiResponseText;
+            if (aiResponseText) {
+                aiOutput.textContent = aiResponseText;
+            } else {
+                aiOutput.textContent = "A IA não conseguiu gerar uma resposta. Resposta bruta: " + JSON.stringify(data, null, 2);
+            }
+
 
         } catch (error) {
             aiOutput.textContent = `Erro na análise de IA: ${error.message}`;
@@ -214,3 +248,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
