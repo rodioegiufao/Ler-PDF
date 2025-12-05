@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leitor de PDF Avançado (Texto Direto + OCR)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     
     <link rel="stylesheet" href="styles.css">
@@ -31,14 +32,20 @@
         <h2>Conteúdo Extraído:</h2>
         <pre id="output">O texto extraído aparecerá aqui.</pre>
 
-        <div id="canvasContainer" style="display: none;">
-            <h3>Visualização da Página (Para fins de depuração de OCR)</h3>
-            <canvas id="pdfCanvas"></canvas>
+        <div id="apiInstruction" style="margin-top: 20px; padding: 10px; border: 1px dashed #f00; background: #ffebeb;">
+            <strong>⚠️ Ação Necessária:</strong> Substitua "SUA_CHAVE_GEMINI_API_AQUI" no arquivo `script.js` pela sua chave do Google Gemini.
         </div>
-        <button id="analyzeButton" disabled>Analisar Conteúdo com IA</button>
+
+        <button id="analyzeButton" disabled>Analisar Conteúdo com Gemini</button>
+
         <div class="content-display" style="margin-top: 20px;">
             <h2>Análise da IA:</h2>
             <pre id="aiOutput">Aguardando texto para análise...</pre>
+        </div>
+        
+        <div id="canvasContainer" style="display: none;">
+            <h3>Visualização da Página (Para fins de depuração de OCR)</h3>
+            <canvas id="pdfCanvas"></canvas>
         </div>
     </div>
 
@@ -46,6 +53,3 @@
 </body>
 
 </html>
-
-
-
