@@ -186,8 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Prompt de Instrução (Você pode refinar esta instrução!)
         const promptInstruction = 
-            `DETERMINE AS INFORMAÇÕES GERAIS DO ARQUIVO
-            
+            `Analise o texto técnico de projeto (que pode incluir especificações, advertências, legendas, notas e carimbo) fornecido. Com base exclusivamente neste texto, estruture sua resposta em três seções principais, garantindo que todos os dados relevantes sejam extraídos, mesmo que o projeto seja de uma área diferente da engenharia elétrica:
             TEXTO EXTRAÍDO: \n\n ${text}`;
 
         try {
@@ -240,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
