@@ -1,7 +1,7 @@
 // Acessando o módulo pdfjsLib
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
 
-// **CORREÇÃO CRUCIAL:** Configuração do Worker para pdf.js (versão modular .mjs)
+// **Configuração do Worker para pdf.js**
 pdfjsLib.GlobalWorkerOptions.workerSrc = 
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Função para ler o arquivo XLSX, extraindo as colunas D, E e F.
+     * Função para ler o arquivo XLSX, extraindo as colunas D (3), E (4) e F (5).
      */
     function handleExcelFileUpload(event) {
         const file = event.target.files[0];
@@ -83,47 +83,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 
-                // Converte a planilha para uma matriz de arrays (sem usar cabeçalhos de coluna para garantir)
+                // Converte a planilha para uma matriz de arrays
                 const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                // NOVO: Determinar o índice de início dos dados procurando pela linha do cabeçalho
-                let DATA_START_ROW_INDEX = -1;
-                const DESCRIPTION_COLUMN_INDEX = 3; // Coluna D no índice de array
-                const HEADER_COLUMN_D_TEXT = 'Descrição'; // Texto esperado na célula do cabeçalho
-                
-                // Procurar pela linha do cabeçalho 'Descrição'
-                for (let i = 0; i < sheetData.length; i++) {
-                    const row = sheetData[i];
-                    // Verificar se a célula na coluna D (índice 3) contém o texto 'Descrição'
-                    // Usamos String(row[...]) para garantir que funcione mesmo se a célula for null ou number
-                    if (row[DESCRIPTION_COLUMN_INDEX] && String(row[DESCRIPTION_COLUMN_INDEX]).trim() === HEADER_COLUMN_D_TEXT) {
-                        DATA_START_ROW_INDEX = i + 1;
-                        break; // Cabeçalho encontrado, podemos parar
-                    }
-                }
-                
-                // Fallback (o cenário que falhou antes, mas útil se o cabeçalho estiver mal formatado)
-                if (DATA_START_ROW_INDEX === -1) {
-                     // Com base no seu arquivo, o índice 4 é o mais provável para o início dos dados se o cabeçalho for pulado
-                     DATA_START_ROW_INDEX = 4; 
-                     updateMessage('... Aviso: Não foi possível detectar a linha do cabeçalho "Descrição" automaticamente. Iniciando leitura na 5ª linha.', false);
-                }
+                // CORREÇÃO FINAL: Forçar o início da leitura de dados na LINHA 5 (índice 4), 
+                // que é onde o primeiro item 'Item' (código 1) começa após o cabeçalho.
+                const DATA_START_ROW_INDEX = 4;
 
+                // Colunas que precisamos: D=3 (Descrição), E=4 (Unidade), F=5 (Quantidade)
+                const DESCRIPTION_COL_INDEX = 3; 
+                const UNIT_COL_INDEX = 4;
+                const QUANTITY_COL_INDEX = 5;
 
-                // Processa os dados para extrair as colunas D (3), E (4) e F (5)
                 let extractedDataArray = ['Descrição | Unidade | Quantidade']; 
                 
-                // Iterar sobre as linhas, começando a partir do índice de dados detectado
+                // Iterar sobre as linhas, começando pela linha de dados (índice 4)
                 for (let i = DATA_START_ROW_INDEX; i < sheetData.length; i++) {
                     const row = sheetData[i];
                     
-                    // Colunas no array sheetData: D=3, E=4, F=5
-                    const description = String(row[3] || '').trim(); // Garante string e remove espaços
-                    const unit = String(row[4] || '').trim();
-                    // Usar String(row[5]...) para garantir que números (incluindo 0) ou strings sejam tratados
-                    const quantity = String(row[5] !== undefined && row[5] !== null ? row[5] : '').trim(); 
+                    // Tratamento robusto para valores undefined/null e remoção de espaços
+                    const description = String(row[DESCRIPTION_COL_INDEX] || '').trim(); 
+                    const unit = String(row[UNIT_COL_INDEX] || '').trim();
+                    const quantity = String(row[QUANTITY_COL_INDEX] !== undefined && row[QUANTITY_COL_INDEX] !== null ? row[QUANTITY_COL_INDEX] : '').trim(); 
                     
-                    // Incluir linhas que tenham descrição (incluindo linhas de sumário)
+                    // Apenas adiciona se houver uma descrição (ignorando linhas completamente vazias ou de metadados posteriores)
                     if (description) { 
                         extractedDataArray.push(`${description} | ${unit} | ${quantity}`);
                     }
@@ -135,20 +118,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (totalItems > 0) {
                     // Limitar a saída no console para display (os dados da IA usarão tudo)
                     const displayData = extractedDataArray.slice(0, 50).join('\n') + 
-                                        (totalItems > 50 ? `\n... Mais ${totalItems - 50} itens não mostrados ...` : '');
+                                        (totalItems > 50 ? `\n\n... Mais ${totalItems - 50} itens não mostrados. Total: ${totalItems} ...` : '');
                                         
                     extractedExcelData = extractedDataArray.join('\n'); // Usa TUDO para a IA
                     excelOutput.textContent = displayData;
-                    updateMessage(`... Leitura do XLSX concluída: ${totalItems} itens extraídos, começando na linha ${DATA_START_ROW_INDEX + 1}.`);
+                    updateMessage(`... Leitura do XLSX concluída com sucesso: ${totalItems} itens extraídos.`);
                 } else {
                     extractedExcelData = '';
-                    excelOutput.textContent = `Erro: Nenhuma linha de dados com descrição encontrada a partir da linha ${DATA_START_ROW_INDEX + 1}. Verifique se a coluna 'Descrição' está na coluna D.`;
-                    updateMessage(`... Erro de processamento: Nenhuma linha de dados encontrada a partir da linha ${DATA_START_ROW_INDEX + 1}.`, true);
+                    excelOutput.textContent = 'Erro: Nenhuma linha de dados com descrição encontrada a partir da 5ª linha. Confirme se as colunas D, E e F estão corretas.';
+                    updateMessage('... Erro de processamento: Nenhuma linha de dados encontrada.', true);
                 }
 
             } catch (error) {
                 extractedExcelData = '';
-                excelOutput.textContent = 'Erro fatal ao ler o arquivo XLSX. Verifique se o arquivo está no formato .xlsx, se está na primeira aba e se as bibliotecas foram carregadas.';
+                excelOutput.textContent = 'Erro fatal ao ler o arquivo XLSX. Verifique se o arquivo está no formato .xlsx e se a biblioteca SheetJS foi carregada no HTML.';
                 updateMessage(`... Erro ao processar XLSX: ${error.message}`, true);
                 console.error('Erro de XLSX:', error);
             }
@@ -159,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Função que gerencia o fluxo de leitura do arquivo PDF (Direto e OCR).
+     * (Mantida inalterada da versão anterior)
      */
     async function handlePdfFileUpload(event) {
         const file = event.target.files[0];
