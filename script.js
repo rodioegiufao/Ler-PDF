@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ],
                     generationConfig: {
                         temperature: 0.1, 
-                        maxOutputTokens: 500
+                        maxOutputTokens: 4096
                     }
                 })
             });
@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
 
 
